@@ -73,9 +73,18 @@ private:
 
 	uint64_t m_FenceValues[Window::BufferCount] = {};
 
+
+	enum VertexBufferElement
+	{
+		VBE_Position,
+		VBE_Color,
+
+		VBE_Count
+	};
+
 	// Vertex buffer for the cube.
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffers[VBE_Count];
+	D3D12_VERTEX_BUFFER_VIEW m_VertexBufferViews[VBE_Count];
 	// Index buffer for the cube.
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
 	D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;

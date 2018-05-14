@@ -30,21 +30,32 @@ constexpr const T& clamp(const T& val, const T& min, const T& max)
 }
 
 // Vertex data for a colored cube.
-struct VertexPosColor
-{
-	XMFLOAT3 Position;
-	XMFLOAT3 Color;
+//struct VertexPosColor
+//{
+//	XMFLOAT3 Position;
+//	XMFLOAT3 Color;
+//};
+
+static XMFLOAT3 g_VerticesPos[8] = {
+	 XMFLOAT3(-1.0f, -1.0f, -1.0f),// 0
+	 XMFLOAT3(-1.0f,  1.0f, -1.0f),// 1
+	 XMFLOAT3(1.0f,  1.0f, -1.0f), // 2
+	 XMFLOAT3(1.0f, -1.0f, -1.0f), // 3
+	 XMFLOAT3(-1.0f, -1.0f,  1.0f),// 4
+	 XMFLOAT3(-1.0f,  1.0f,  1.0f),// 5
+	 XMFLOAT3(1.0f,  1.0f,  1.0f), // 6
+	 XMFLOAT3(1.0f, -1.0f,  1.0f)  // 7
 };
 
-static VertexPosColor g_Vertices[8] = {
-	{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) }, // 0
-{ XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) }, // 1
-{ XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(1.0f, 1.0f, 0.0f) }, // 2
-{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f) }, // 3
-{ XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) }, // 4
-{ XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f, 1.0f, 1.0f) }, // 5
-{ XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) }, // 6
-{ XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f, 0.0f, 1.0f) }  // 7
+static XMFLOAT3 g_VerticesCol[8] = {
+			XMFLOAT3(0.0f, 0.0f, 0.0f), // 0
+			XMFLOAT3(0.0f, 1.0f, 0.0f), // 1
+			XMFLOAT3(1.0f, 1.0f, 0.0f), // 2
+			XMFLOAT3(1.0f, 0.0f, 0.0f), // 3
+			XMFLOAT3(0.0f, 0.0f, 1.0f), // 4
+			XMFLOAT3(0.0f, 1.0f, 1.0f), // 5
+			XMFLOAT3(1.0f, 1.0f, 1.0f), // 6
+			XMFLOAT3(1.0f, 0.0f, 1.0f)  // 7
 };
 
 static WORD g_Indicies[36] =
@@ -115,16 +126,29 @@ bool Tutorial2::LoadContent()
 	auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 	auto commandList = commandQueue->GetCommandList();
 
-	// Upload vertex buffer data.
-	ComPtr<ID3D12Resource> intermediateVertexBuffer;
+	// Upload vertex buffer position data.
+	ComPtr<ID3D12Resource> intermediateVertexBufferPos;
 	UpdateBufferResource(commandList,
-		&m_VertexBuffer, &intermediateVertexBuffer,
-		_countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
+		&m_VertexBuffers[VBE_Position], &intermediateVertexBufferPos,
+		_countof(g_VerticesPos), sizeof(XMFLOAT3), g_VerticesPos);
 
-	// Create the vertex buffer view.
-	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-	m_VertexBufferView.SizeInBytes = sizeof(g_Vertices);
-	m_VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
+	// Create the vertex buffer position view.
+	m_VertexBufferViews[VBE_Position].BufferLocation = m_VertexBuffers[VBE_Position]->GetGPUVirtualAddress();
+	m_VertexBufferViews[VBE_Position].SizeInBytes = sizeof(g_VerticesPos);
+	m_VertexBufferViews[VBE_Position].StrideInBytes = sizeof(XMFLOAT3);
+
+
+	// Upload vertex buffer color data.
+	ComPtr<ID3D12Resource> intermediateVertexBufferCol;
+	UpdateBufferResource(commandList,
+		&m_VertexBuffers[VBE_Color], &intermediateVertexBufferCol,
+		_countof(g_VerticesCol), sizeof(XMFLOAT3), g_VerticesCol);
+
+	// Create the vertex buffer color view.
+	m_VertexBufferViews[VBE_Color].BufferLocation = m_VertexBuffers[VBE_Color]->GetGPUVirtualAddress();
+	m_VertexBufferViews[VBE_Color].SizeInBytes = sizeof(g_VerticesCol);
+	m_VertexBufferViews[VBE_Color].StrideInBytes = sizeof(XMFLOAT3);
+
 
 	// Upload index buffer data.
 	ComPtr<ID3D12Resource> intermediateIndexBuffer;
@@ -155,7 +179,7 @@ bool Tutorial2::LoadContent()
 	// Create the vertex input layout
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
 	// Create a root signature.
@@ -377,7 +401,7 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 	commandList->SetGraphicsRootSignature(m_RootSignature.Get());
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
+	commandList->IASetVertexBuffers(0, VBE_Count, m_VertexBufferViews);
 	commandList->IASetIndexBuffer(&m_IndexBufferView);
 
 	commandList->RSSetViewports(1, &m_Viewport);
