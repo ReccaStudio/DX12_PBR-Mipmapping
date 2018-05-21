@@ -29,13 +29,6 @@ constexpr const T& clamp(const T& val, const T& min, const T& max)
 	return val < min ? min : val > max ? max : val;
 }
 
-// Vertex data for a colored cube.
-//struct VertexPosColor
-//{
-//	XMFLOAT3 Position;
-//	XMFLOAT3 Color;
-//};
-
 static XMFLOAT3 g_VerticesPos[8] = 
 {
 	XMFLOAT3(-1.0f, -1.0f, -1.0f),// 0
@@ -62,22 +55,22 @@ static XMFLOAT3 g_VerticesCol[8] =
 
 static XMMATRIX g_InstanceData[16] = 
 {
-	XMMatrixTranslation(-2.0f, -2.0f,  0.0f),
-	XMMatrixTranslation( 2.0f, -2.0f,  0.0f),
-	XMMatrixTranslation(-2.0f,  2.0f,  0.0f),
-	XMMatrixTranslation( 2.0f,  2.0f,  0.0f),
-	XMMatrixTranslation(-6.0f, -2.0f,  0.0f),
-	XMMatrixTranslation( 6.0f, -2.0f,  0.0f),
-	XMMatrixTranslation(-6.0f,  2.0f,  0.0f),
-	XMMatrixTranslation( 6.0f,  2.0f,  0.0f),
-	XMMatrixTranslation(-2.0f, -2.0f, -5.0f),
-	XMMatrixTranslation( 2.0f, -2.0f, -5.0f),
-	XMMatrixTranslation(-2.0f,  2.0f, -5.0f),
-	XMMatrixTranslation( 2.0f,  2.0f, -5.0f),
-	XMMatrixTranslation(-6.0f, -2.0f, -5.0f),
-	XMMatrixTranslation( 6.0f, -2.0f, -5.0f),
-	XMMatrixTranslation(-6.0f,  2.0f, -5.0f),
-	XMMatrixTranslation( 6.0f,  2.0f, -5.0f)
+	XMMatrixTranslation(-2.0f, -2.0f,  4.0f),
+	XMMatrixTranslation( 2.0f, -2.0f,  4.0f),
+	XMMatrixTranslation(-2.0f,  2.0f,  4.0f),
+	XMMatrixTranslation( 2.0f,  2.0f,  4.0f),
+	XMMatrixTranslation(-6.0f, -2.0f,  4.0f),
+	XMMatrixTranslation( 6.0f, -2.0f,  4.0f),
+	XMMatrixTranslation(-6.0f,  2.0f,  4.0f),
+	XMMatrixTranslation( 6.0f,  2.0f,  4.0f),
+	XMMatrixTranslation(-2.0f, -2.0f, -4.0f),
+	XMMatrixTranslation( 2.0f, -2.0f, -4.0f),
+	XMMatrixTranslation(-2.0f,  2.0f, -4.0f),
+	XMMatrixTranslation( 2.0f,  2.0f, -4.0f),
+	XMMatrixTranslation(-6.0f, -2.0f, -4.0f),
+	XMMatrixTranslation( 6.0f, -2.0f, -4.0f),
+	XMMatrixTranslation(-6.0f,  2.0f, -4.0f),
+	XMMatrixTranslation( 6.0f,  2.0f, -4.0f)
 };
 
 static WORD g_Indicies[36] =
@@ -205,6 +198,10 @@ bool Tutorial2::LoadContent()
 	ComPtr<ID3DBlob> vertexShaderBlob;
 	ThrowIfFailed(D3DReadFileToBlob(L"VertexShader.cso", &vertexShaderBlob));
 
+	// Load the geometry shader.
+	ComPtr<ID3DBlob> geometryShaderBlob;
+	ThrowIfFailed(D3DReadFileToBlob(L"GeometryShader.cso", &geometryShaderBlob));
+
 	// Load the pixel shader.
 	ComPtr<ID3DBlob> pixelShaderBlob;
 	ThrowIfFailed(D3DReadFileToBlob(L"PixelShader.cso", &pixelShaderBlob));
@@ -257,22 +254,29 @@ bool Tutorial2::LoadContent()
 		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
 		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
 		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
+		CD3DX12_PIPELINE_STATE_STREAM_GS GS;
 		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
 		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
+		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RastState;
 	} pipelineStateStream;
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
 	rtvFormats.NumRenderTargets = 1;
 	rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
+	CD3DX12_RASTERIZER_DESC rastDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	rastDesc.CullMode = D3D12_CULL_MODE_NONE;
+
 	pipelineStateStream.pRootSignature = m_RootSignature.Get();
 	pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
 	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+	pipelineStateStream.GS = CD3DX12_SHADER_BYTECODE(geometryShaderBlob.Get());
 	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
 	pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	pipelineStateStream.RTVFormats = rtvFormats;
+	pipelineStateStream.RastState = rastDesc;
 
 	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
 		sizeof(PipelineStateStream), &pipelineStateStream
