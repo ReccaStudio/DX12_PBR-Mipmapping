@@ -334,7 +334,7 @@ void Window::UpdateRenderTargetViews()
 		device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtvHandle);
 
 		m_BackBuffers[i] = backBuffer;
-
+		
 		rtvHandle.Offset(m_RTVDescriptorSize);
 	}
 }

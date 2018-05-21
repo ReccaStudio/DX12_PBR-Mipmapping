@@ -36,26 +36,48 @@ constexpr const T& clamp(const T& val, const T& min, const T& max)
 //	XMFLOAT3 Color;
 //};
 
-static XMFLOAT3 g_VerticesPos[8] = {
-	 XMFLOAT3(-1.0f, -1.0f, -1.0f),// 0
-	 XMFLOAT3(-1.0f,  1.0f, -1.0f),// 1
-	 XMFLOAT3(1.0f,  1.0f, -1.0f), // 2
-	 XMFLOAT3(1.0f, -1.0f, -1.0f), // 3
-	 XMFLOAT3(-1.0f, -1.0f,  1.0f),// 4
-	 XMFLOAT3(-1.0f,  1.0f,  1.0f),// 5
-	 XMFLOAT3(1.0f,  1.0f,  1.0f), // 6
-	 XMFLOAT3(1.0f, -1.0f,  1.0f)  // 7
+static XMFLOAT3 g_VerticesPos[8] = 
+{
+	XMFLOAT3(-1.0f, -1.0f, -1.0f),// 0
+	XMFLOAT3(-1.0f,  1.0f, -1.0f),// 1
+	XMFLOAT3(1.0f,  1.0f, -1.0f), // 2
+	XMFLOAT3(1.0f, -1.0f, -1.0f), // 3
+	XMFLOAT3(-1.0f, -1.0f,  1.0f),// 4
+	XMFLOAT3(-1.0f,  1.0f,  1.0f),// 5
+	XMFLOAT3(1.0f,  1.0f,  1.0f), // 6
+	XMFLOAT3(1.0f, -1.0f,  1.0f)  // 7
 };
 
-static XMFLOAT3 g_VerticesCol[8] = {
-			XMFLOAT3(0.0f, 0.0f, 0.0f), // 0
-			XMFLOAT3(0.0f, 1.0f, 0.0f), // 1
-			XMFLOAT3(1.0f, 1.0f, 0.0f), // 2
-			XMFLOAT3(1.0f, 0.0f, 0.0f), // 3
-			XMFLOAT3(0.0f, 0.0f, 1.0f), // 4
-			XMFLOAT3(0.0f, 1.0f, 1.0f), // 5
-			XMFLOAT3(1.0f, 1.0f, 1.0f), // 6
-			XMFLOAT3(1.0f, 0.0f, 1.0f)  // 7
+static XMFLOAT3 g_VerticesCol[8] = 
+{
+	XMFLOAT3(0.0f, 0.0f, 0.0f), // 0
+	XMFLOAT3(0.0f, 1.0f, 0.0f), // 1
+	XMFLOAT3(1.0f, 1.0f, 0.0f), // 2
+	XMFLOAT3(1.0f, 0.0f, 0.0f), // 3
+	XMFLOAT3(0.0f, 0.0f, 1.0f), // 4
+	XMFLOAT3(0.0f, 1.0f, 1.0f), // 5
+	XMFLOAT3(1.0f, 1.0f, 1.0f), // 6
+	XMFLOAT3(1.0f, 0.0f, 1.0f)  // 7
+};
+
+static XMMATRIX g_InstanceData[16] = 
+{
+	XMMatrixTranslation(-2.0f, -2.0f,  0.0f),
+	XMMatrixTranslation( 2.0f, -2.0f,  0.0f),
+	XMMatrixTranslation(-2.0f,  2.0f,  0.0f),
+	XMMatrixTranslation( 2.0f,  2.0f,  0.0f),
+	XMMatrixTranslation(-6.0f, -2.0f,  0.0f),
+	XMMatrixTranslation( 6.0f, -2.0f,  0.0f),
+	XMMatrixTranslation(-6.0f,  2.0f,  0.0f),
+	XMMatrixTranslation( 6.0f,  2.0f,  0.0f),
+	XMMatrixTranslation(-2.0f, -2.0f, -5.0f),
+	XMMatrixTranslation( 2.0f, -2.0f, -5.0f),
+	XMMatrixTranslation(-2.0f,  2.0f, -5.0f),
+	XMMatrixTranslation( 2.0f,  2.0f, -5.0f),
+	XMMatrixTranslation(-6.0f, -2.0f, -5.0f),
+	XMMatrixTranslation( 6.0f, -2.0f, -5.0f),
+	XMMatrixTranslation(-6.0f,  2.0f, -5.0f),
+	XMMatrixTranslation( 6.0f,  2.0f, -5.0f)
 };
 
 static WORD g_Indicies[36] =
@@ -150,6 +172,17 @@ bool Tutorial2::LoadContent()
 	m_VertexBufferViews[VBE_Color].StrideInBytes = sizeof(XMFLOAT3);
 
 
+	// Upload the World Matrix Instance data.
+	UpdateBufferResource(commandList,
+		&m_VertexBuffers[VBE_WorldMat], &m_IntermediateInstanceData,
+		_countof(g_InstanceData), sizeof(XMMATRIX), g_InstanceData);
+
+	// Create the instanced data buffer view.
+	m_VertexBufferViews[VBE_WorldMat].BufferLocation = m_VertexBuffers[VBE_WorldMat]->GetGPUVirtualAddress();
+	m_VertexBufferViews[VBE_WorldMat].SizeInBytes = sizeof(g_InstanceData);
+	m_VertexBufferViews[VBE_WorldMat].StrideInBytes = sizeof(XMMATRIX);
+
+
 	// Upload index buffer data.
 	ComPtr<ID3D12Resource> intermediateIndexBuffer;
 	UpdateBufferResource(commandList,
@@ -180,6 +213,10 @@ bool Tutorial2::LoadContent()
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	{ "WORLDMAT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+	{ "WORLDMAT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+	{ "WORLDMAT", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 },
+	{ "WORLDMAT", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1 }
 	};
 
 	// Create a root signature.
@@ -336,10 +373,33 @@ void Tutorial2::OnUpdate(UpdateEventArgs& e)
 	// Update the model matrix.
 	float angle = static_cast<float>(e.TotalTime * 90.0);
 	const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-	m_ModelMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+	XMMATRIX rotationMat = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+
+	XMMATRIX tempInstancedData[16];
+
+	for (uint8_t i = 0u; i < 16; ++i)
+	{
+		tempInstancedData[i] = XMMatrixMultiply(rotationMat, g_InstanceData[i]);
+	}
+	
+	auto device = Application::Get().GetDevice();
+	auto commandQueueCopy = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	auto commandListCopy = commandQueueCopy->GetCommandList();
+
+	void* mappedData;
+	CD3DX12_RANGE readRange(0, 0);
+	m_IntermediateInstanceData->Map(0, &readRange, &mappedData);
+
+	memcpy(mappedData, tempInstancedData, _countof(tempInstancedData) * sizeof(XMMATRIX));
+
+	m_IntermediateInstanceData->Unmap(0, NULL);
+
+	commandListCopy->CopyResource(m_VertexBuffers[VBE_WorldMat].Get(), m_IntermediateInstanceData.Get());
+
+	commandQueueCopy->WaitForFenceValue(commandQueueCopy->ExecuteCommandList(commandListCopy));
 
 	// Update the view matrix.
-	const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
+	const XMVECTOR eyePosition = XMVectorSet(0, 5, -20, 1);
 	const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
 	const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
 	m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
@@ -410,11 +470,10 @@ void Tutorial2::OnRender(RenderEventArgs& e)
 	commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 
 	// Update the MVP matrix
-	XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-	mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
-	commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+	XMMATRIX vpMatrix = XMMatrixMultiply(m_ViewMatrix, m_ProjectionMatrix);
+	commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &vpMatrix, 0);
 
-	commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+	commandList->DrawIndexedInstanced(_countof(g_Indicies), 16, 0, 0, 0);
 
 	// Present
 	{

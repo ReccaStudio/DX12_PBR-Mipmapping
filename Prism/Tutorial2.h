@@ -78,12 +78,14 @@ private:
 	{
 		VBE_Position,
 		VBE_Color,
+		VBE_WorldMat,
 
 		VBE_Count
 	};
 
 	// Vertex buffer for the cube.
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffers[VBE_Count];
+	Microsoft::WRL::ComPtr<ID3D12Resource> m_IntermediateInstanceData; //We update this every frame.
 	D3D12_VERTEX_BUFFER_VIEW m_VertexBufferViews[VBE_Count];
 	// Index buffer for the cube.
 	Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
@@ -105,7 +107,7 @@ private:
 
 	float m_FoV;
 
-	DirectX::XMMATRIX m_ModelMatrix;
+	//DirectX::XMMATRIX m_ModelMatrix;
 	DirectX::XMMATRIX m_ViewMatrix;
 	DirectX::XMMATRIX m_ProjectionMatrix;
 
