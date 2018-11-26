@@ -20,7 +20,7 @@ class Window
 {
 public:
 	// Number of swapchain back buffers.
-	static const UINT BufferCount = 3;
+	static const UINT BufferCount = 2;
 
 	HWND GetWindowHandle() const;
 
@@ -50,6 +50,8 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
+
+	HWND WindowHandle() { return m_hWnd; }
 
 protected:
 	// The Window procedure needs to call protected methods of this class.
@@ -126,3 +128,5 @@ private:
 	bool m_IsTearingSupported;
 
 };
+
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -1,5 +1,10 @@
 #pragma once
 
+#pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <shellapi.h> // For CommandLineToArgvW
@@ -31,7 +36,7 @@ using namespace Microsoft::WRL;
 #include <DirectXMath.h>
 
 // D3D12 extension library.
-#include "D3DX12\d3dx12.h"
+#include "Libs\D3DX12\d3dx12.h"
 
 // STL Headers
 #include <algorithm>

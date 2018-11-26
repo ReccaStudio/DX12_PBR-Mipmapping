@@ -6,6 +6,9 @@
 #include "CommandQueue.h"
 
 #include <map>
+#include <memory>
+
+#include "imgui-master\examples\directx12_example\imgui_impl_dx12.h"
 
 constexpr wchar_t WINDOW_CLASS_NAME[] = L"DX12RenderWindowClass";
 
@@ -41,9 +44,10 @@ Application::Application(HINSTANCE hInst)
 	// Always enable the debug layer before doing anything DX12 related
 	// so all possible errors generated while creating DX12 objects
 	// are caught by the debug layer.
-	ComPtr<ID3D12Debug> debugInterface;
+	ComPtr<ID3D12Debug1> debugInterface;
 	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
 	debugInterface->EnableDebugLayer();
+	debugInterface->SetEnableGPUBasedValidation(false);
 #endif
 
 	WNDCLASSEXW wndClass = { 0 };
@@ -423,6 +427,10 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 
 	if (pWindow)
 	{
+		if (ImGui_ImplWin32_WndProcHandler(hwnd, message, wParam, lParam))
+			return true;
+
+
 		switch (message)
 		{
 		case WM_PAINT:
@@ -569,8 +577,12 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			int width = ((int)(short)LOWORD(lParam));
 			int height = ((int)(short)HIWORD(lParam));
 
+			ImGui_ImplDX12_InvalidateDeviceObjects();
+
 			ResizeEventArgs resizeEventArgs(width, height);
 			pWindow->OnResize(resizeEventArgs);
+
+			ImGui_ImplDX12_CreateDeviceObjects();
 		}
 		break;
 		case WM_DESTROY:

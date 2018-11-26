@@ -46,6 +46,8 @@ public:
 	* Destroy any resource that are used by the game.*/
 	virtual void Destroy();
 
+	std::wstring GetName() { return m_Name; }
+
 protected:
 	friend class Window;
 
